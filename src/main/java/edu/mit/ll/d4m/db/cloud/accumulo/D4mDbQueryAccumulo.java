@@ -1,14 +1,21 @@
 package edu.mit.ll.d4m.db.cloud.accumulo;
 
-import edu.mit.ll.cloud.connection.ConnectionProperties;
-import edu.mit.ll.d4m.db.cloud.D4mConfig;
-import edu.mit.ll.d4m.db.cloud.D4mDbResultSet;
-import edu.mit.ll.d4m.db.cloud.D4mDbRow;
-import edu.mit.ll.d4m.db.cloud.D4mException;
-import edu.mit.ll.d4m.db.cloud.D4mParentQuery;
-import edu.mit.ll.d4m.db.cloud.util.CompareUtil;
-import edu.mit.ll.d4m.db.cloud.util.D4mDataObj;
-import edu.mit.ll.d4m.db.cloud.util.RegExpUtil;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.apache.accumulo.core.client.Accumulo;
+import org.apache.accumulo.core.client.AccumuloClient;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.BatchScanner;
@@ -23,19 +30,15 @@ import org.apache.accumulo.core.iterators.user.RegExFilter;
 import org.apache.hadoop.io.Text;
 import org.apache.log4j.Logger;
 
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import edu.mit.ll.cloud.connection.ConnectionProperties;
+import edu.mit.ll.d4m.db.cloud.D4mConfig;
+import edu.mit.ll.d4m.db.cloud.D4mDbResultSet;
+import edu.mit.ll.d4m.db.cloud.D4mDbRow;
+import edu.mit.ll.d4m.db.cloud.D4mException;
+import edu.mit.ll.d4m.db.cloud.D4mParentQuery;
+import edu.mit.ll.d4m.db.cloud.util.CompareUtil;
+import edu.mit.ll.d4m.db.cloud.util.D4mDataObj;
+import edu.mit.ll.d4m.db.cloud.util.RegExpUtil;
 
 
 /**
@@ -89,7 +92,7 @@ public class D4mDbQueryAccumulo extends D4mParentQuery {
 	private boolean getAllData = false;
 	private LinkedList<Range> rangesList= new LinkedList<>();
 	private CompareUtil compareUtil=null;
-	AccumuloConnection connection=null;
+	AccumuloClient connection = null;
 	//private ConcurrentLinkedQueue <Entry<Key, Value>> dataQue=new ConcurrentLinkedQueue<Entry<Key,Value>>();
 	public D4mDbQueryAccumulo() {
 		super();
@@ -694,16 +697,19 @@ public class D4mDbQueryAccumulo extends D4mParentQuery {
 
 	private Scanner getScanner() throws AccumuloException, AccumuloSecurityException, TableNotFoundException {
 		if(this.connection == null)
-		this.connection = new AccumuloConnection(this.connProps);
+		this.connection = Accumulo.newClient()
+                .from(connProps).build();
+
 		if(this.scanner == null)
 			this.scanner = connection.createScanner(tableName);
 		return scanner;
 	}
 	private BatchScanner getBatchScanner() throws AccumuloException, AccumuloSecurityException, TableNotFoundException {
 		if(this.connection == null)
-		connection = new AccumuloConnection(this.connProps);
+		connection = Accumulo.newClient()
+                .from(connProps).build();
 		if(this.bscanner == null)
-			this.bscanner = connection.getBatchScanner(this.tableName, this.numberOfThreads);
+			this.bscanner = connection.createBatchScanner(this.tableName);
 		return this.bscanner;
 	}
 
@@ -1319,8 +1325,8 @@ public class D4mDbQueryAccumulo extends D4mParentQuery {
 		this.scannerIter = null;
 
 		clearBuffers();
-                if(this.connection != null)
-                   this.connection.setAuthorizations(connProps);
+//                if(this.connection != null)
+//                   this.connection.setAuthorizations(connProps);
 
 	}
 	public String getFamily() {

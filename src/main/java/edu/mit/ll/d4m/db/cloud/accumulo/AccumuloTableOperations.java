@@ -19,13 +19,20 @@ import java.util.Map.Entry;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import org.apache.accumulo.core.client.Accumulo;
+import org.apache.accumulo.core.client.AccumuloClient;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.IteratorSetting;
+import org.apache.accumulo.core.client.TableExistsException;
 import org.apache.accumulo.core.client.TableNotFoundException;
+import org.apache.accumulo.core.client.admin.TableOperations;
+import org.apache.accumulo.core.clientImpl.ClientContext;
+import org.apache.accumulo.core.clientImpl.MasterClient;
 import org.apache.accumulo.core.data.Key;
-import org.apache.accumulo.core.data.KeyExtent;
+import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
+import org.apache.accumulo.core.dataImpl.KeyExtent;
 import org.apache.accumulo.core.iterators.Combiner;
 import org.apache.accumulo.core.iterators.IteratorUtil;
 import org.apache.accumulo.core.iterators.IteratorUtil.IteratorScope;
@@ -50,9 +57,6 @@ import edu.mit.ll.d4m.db.cloud.D4mException;
 import edu.mit.ll.d4m.db.cloud.accumulo.AccumuloCombiner.CombiningType;
 import edu.mit.ll.d4m.db.cloud.util.D4mQueryUtil;
 
-//${accumulo.VERSION.1.6}import org.apache.accumulo.core.util.ThriftUtil; // 1.6
-//${accumulo.VERSION.1.6}import org.apache.accumulo.trace.thrift.TInfo; // 1.6
-
 /**
  * @author cyee
  *
@@ -60,9 +64,10 @@ import edu.mit.ll.d4m.db.cloud.util.D4mQueryUtil;
 public class AccumuloTableOperations {
 	private static final Logger log = Logger.getLogger(AccumuloTableOperations.class);
 
-	AccumuloConnection connection= null;
-	ConnectionProperties connProp= null;
-
+	AccumuloClient connection = null;
+	ConnectionProperties connProp = null;
+	TableOperations tableOps = connection.tableOperations();
+	
 	/**
 	 * 
 	 */
@@ -78,16 +83,16 @@ public class AccumuloTableOperations {
 	 * @see edu.mit.ll.d4m.db.cloud.D4mTableOpsIF#createTable(java.lang.String)
 	 */
 	
-	public void createTable(String tableName) {
-		this.connection.createTable(tableName);
+	public void createTable(String tableName) throws AccumuloException, AccumuloSecurityException, TableExistsException {
+		this.tableOps.create(tableName);
 	}
 
 	/* (non-Javadoc)
 	 * @see edu.mit.ll.d4m.db.cloud.D4mTableOpsIF#deleteTable(java.lang.String)
 	 */
 	
-	public void deleteTable(String tableName) {
-		this.connection.deleteTable(tableName);
+	public void deleteTable(String tableName) throws AccumuloException, AccumuloSecurityException, TableNotFoundException {
+		this.tableOps.delete(tableName);
 	}
 
 	
@@ -141,23 +146,24 @@ public class AccumuloTableOperations {
 
 	private ArrayList<TabletServerStatus> getTabletServers() throws TException {
 		ArrayList<TabletServerStatus> list = new ArrayList<>();// list of TServer info
-		MasterClientService.Client client=null;
+		MasterClientService.Client client = null;
 		//		MasterClientService.Iface client=null;
-		try {
-			client = this.connection.getMasterClient();
-			//changed in accumulo-1.4
-			//			mmi = client.getMasterStats(null, getAuthInfo());
-			TInfo tinfo = new TInfo();
-			MasterMonitorInfo mmi = client.getMasterStats(tinfo,this.connection.getCredentials() );
-
-			list.addAll(mmi.getTServerInfo());
-		} catch(D4mException e) {
-			log.warn(e);
-		} finally {
-			ThriftUtil.returnClient(client);
-		}
+//		try {
+//			client = MasterClient.getMasterClient();
+//			//changed in accumulo-1.4
+//			//			mmi = client.getMasterStats(null, getAuthInfo());
+//			TInfo tinfo = new TInfo();
+//			MasterMonitorInfo mmi = client.getMasterStats(tinfo, ((ClientContext)connection).getCredentials() );
+//
+//			list.addAll(mmi.getTServerInfo());
+//		} catch(D4mException e) {
+//			log.warn(e);
+//		} finally {
+//			ThriftUtil.returnClient(client);
+//		}
 		return list;
 	}
+	
 	private List<TabletStats> getTabletStatsList(List<TabletServerStatus> tserverNames, List<String> tableNames) throws D4mException {
 		List<TabletStats> tabStatsList= new ArrayList<>();
 		int cnt=0;
@@ -180,27 +186,27 @@ public class AccumuloTableOperations {
 		TabletClientService.Iface tabClient = null;
 		//AuthInfo authInfo  = getAuthInfo();
 		List<TabletStats> tabStatsList = new ArrayList<>();
-		try {
-			masterClient = this.connection.getMasterClient();
-			tabClient = this.connection.getTabletClient(tserverName);
-			Map<String, String> nameToIdMap = this.connection.getNameToIdMap();
-
-			for(String tableName : tableNames) {
-
-				String tableId = nameToIdMap.get(tableName);
-				log.debug(tserverName+"-Tablet INFO ("+tableName+","+tableId+")");
-				TInfo tinfo = new TInfo();
-
-				tabStatsList.addAll(tabClient.getTabletStats(tinfo, this.connection.getCredentials() , tableId));
-				//		tabStatsList.addAll(tabClient.getTabletStats(null, authInfo, tableId));
-			}
-
-		} catch (TException e) {
-			log.warn(e);
-		} finally {
-			ThriftUtil.returnClient((MasterClientService.Client)masterClient);
-			ThriftUtil.returnClient((TabletClientService.Client)tabClient);
-		}
+//		try {
+//			masterClient = this.connection.getMasterClient();
+//			tabClient = this.connection.getTabletClient(tserverName);
+//			Map<String, String> nameToIdMap = this.connection.getNameToIdMap();
+//
+//			for(String tableName : tableNames) {
+//
+//				String tableId = nameToIdMap.get(tableName);
+//				log.debug(tserverName+"-Tablet INFO ("+tableName+","+tableId+")");
+//				TInfo tinfo = new TInfo();
+//
+//				tabStatsList.addAll(tabClient.getTabletStats(tinfo, this.connection.getCredentials() , tableId));
+//				//		tabStatsList.addAll(tabClient.getTabletStats(null, authInfo, tableId));
+//			}
+//
+//		} catch (TException e) {
+//			log.warn(e);
+//		} finally {
+//			ThriftUtil.returnClient((MasterClientService.Client)masterClient);
+//			ThriftUtil.returnClient((TabletClientService.Client)tabClient);
+//		}
 
 
 		return tabStatsList;
@@ -232,7 +238,8 @@ public class AccumuloTableOperations {
 	 */
 	
 	public void connect() throws AccumuloException,AccumuloSecurityException {
-		this.connection = new AccumuloConnection(connProp);
+		this.connection = Accumulo.newClient()
+                .from(connProp).build();
 	}
 //	public AuthInfo getAuthInfo() {
 //		String user = this.connProp.getUser();
@@ -246,8 +253,11 @@ public class AccumuloTableOperations {
 
 	/**
 	 * Split table at partitions
+	 * @throws AccumuloSecurityException 
+	 * @throws AccumuloException 
+	 * @throws TableNotFoundException 
 	 */
-	public void splitTable(String tableName, String[] partitions) {
+	public void splitTable(String tableName, String[] partitions) throws TableNotFoundException, AccumuloException, AccumuloSecurityException {
 		SortedSet<Text> tset = new TreeSet<>();
 		for(String pt : partitions) {
 			tset.add(new Text(pt));
@@ -257,20 +267,20 @@ public class AccumuloTableOperations {
 	}
 
 	
-	public void splitTable(String tableName, SortedSet<Text> partitions) {
-		this.connection.addSplit(tableName, partitions);
+	public void splitTable(String tableName, SortedSet<Text> partitions) throws TableNotFoundException, AccumuloException, AccumuloSecurityException {
+		this.tableOps.addSplits(tableName, partitions);
 	}
 
 	
 	public List<String> getSplits(String tableName) {
 		List<String> list = new ArrayList<>();
 		try {
-			Collection<Text> splitsColl = this.connection.getSplits(tableName);
+			Collection<Text> splitsColl = this.tableOps.getSplits(tableName);
 			for(Text t: splitsColl) {
 				String s = t.toString();
 				list.add(s);
 			}
-		} catch (TableNotFoundException | AccumuloException | AccumuloSecurityException e) {
+		} catch (TableNotFoundException e) {
 			e.printStackTrace();
 		}
 
@@ -318,27 +328,26 @@ public class AccumuloTableOperations {
 
 
 	
-	public void addIterator(String tableName, IteratorSetting cfg) throws D4mException {
-		this.connection.addIterator(tableName, cfg);
+	public void addIterator(String tableName, IteratorSetting cfg) throws D4mException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
+		this.tableOps.attachIterator(tableName, cfg);
 	}
-	
-	public Map<String, EnumSet<IteratorScope>> listIterators(String tableName) throws D4mException {
-		return this.connection.listIterators(tableName);
+	 Map<String, EnumSet<IteratorScope>> listIterators(String tableName) throws D4mException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
+		return this.tableOps.listIterators(tableName);
 	}
 	
 	public IteratorSetting getIteratorSetting(String tableName,
-			String iterName, IteratorScope scope) throws D4mException {
-		return this.connection.getIteratorSetting(tableName, iterName, scope);
+			String iterName, IteratorScope scope) throws D4mException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
+		return this.tableOps.getIteratorSetting(tableName, iterName, scope);
 	}
 	
 	public void removeIterator(String tableName, String name,
-			EnumSet<IteratorScope> scopes) throws D4mException {
-		this.connection.removeIterator(tableName, name, scopes);
+			EnumSet<IteratorScope> scopes) throws D4mException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
+		this.tableOps.removeIterator(tableName, name, scopes);
 	}
 	
 	public void checkIteratorConflicts(String tableName, IteratorSetting cfg,
-			EnumSet<IteratorScope> scopes) throws D4mException {
-		this.connection.checkIteratorConflicts(tableName, cfg, scopes);
+			EnumSet<IteratorScope> scopes) throws D4mException, AccumuloException, TableNotFoundException {
+		this.tableOps.checkIteratorConflicts(tableName, cfg, scopes);
 	}
 	/*
 	public void addSplits(String tableName, SortedSet<Text> splitsSet) throws D4mException {
@@ -347,10 +356,10 @@ public class AccumuloTableOperations {
 	}*/
 	
 	public void merge(String tableName, String startRow, String endRow) throws D4mException {
-		this.connection.merge(tableName, startRow, endRow);
+		this.merge(tableName, startRow, endRow);
 	}
 
-	public void designateCombiningColumns(String tableName, String columnStrAll, String combineType, String columnFamily) throws D4mException
+	public void designateCombiningColumns(String tableName, String columnStrAll, String combineType, String columnFamily) throws D4mException, AccumuloSecurityException, AccumuloException, TableNotFoundException
 	{
 		checkNotNull(tableName);
 		checkNotNull(columnStrAll);
@@ -411,7 +420,7 @@ public class AccumuloTableOperations {
 
 	}
 
-	public String listCombiningColumns(String tableName) throws D4mException
+	public String listCombiningColumns(String tableName) throws D4mException, AccumuloSecurityException, AccumuloException, TableNotFoundException
 	{
 		checkNotNull(tableName);
 		//	doInit();
@@ -436,7 +445,7 @@ public class AccumuloTableOperations {
 		return sb.toString();
 	}
 
-	public void revokeCombiningColumns(String tableName, String columnStr, String columnFamily) throws D4mException
+	public void revokeCombiningColumns(String tableName, String columnStr, String columnFamily) throws D4mException, AccumuloSecurityException, AccumuloException, TableNotFoundException
 	{
 		checkNotNull(tableName);
 		checkNotNull(columnStr);
@@ -515,7 +524,8 @@ public class AccumuloTableOperations {
 	public List<String> getSplitsNumInEachTablet(String tableName)
 			throws Exception {
 		List<String> list = new ArrayList<>();
-		AccumuloConnection ac = new AccumuloConnection(this.connProp);
+		AccumuloClient ac = Accumulo.newClient()
+                .from(connProp).build();
 		org.apache.accumulo.core.client.Scanner scanner;
 		try {
 			scanner = ac.createScanner(METADATA_TABLE_NAME/*, org.apache.accumulo.core.Constants.NO_AUTHS*/);
@@ -523,8 +533,8 @@ public class AccumuloTableOperations {
 			throw new D4mException("Table not found - "+METADATA_TABLE_NAME,e);
 		}
 		METADATA_PREV_ROW_COLUMN.fetch(scanner);
-		final String internalTableName = ac.getNameToIdMap().get(tableName);
-		final Text start = new Text(ac.getNameToIdMap().get(tableName)); // check
+		final String internalTableName = tableOps.tableIdMap().get(tableName);
+		final Text start = new Text(tableOps.tableIdMap().get(tableName)); // check
 		final Text end = new Text(start);
 		end.append(new byte[] {'<'}, 0, 1);
 		scanner.setRange(new org.apache.accumulo.core.data.Range(start, end));
@@ -567,11 +577,11 @@ public class AccumuloTableOperations {
 	public List<String> getTabletLocationsForSplits(String tableName,
 			List<String> splits) throws D4mException {
 		List<String>  results = new ArrayList<>();
-
+		Range range = new Range();
 		try {
 			for (String splitName : splits) {
-				String tablet_location = this.connection.locateTablet(tableName, splitName);
-				results.add(tablet_location);
+//				String tablet_location = this.tableOps.locate(tableName, splits);
+//				results.add(tablet_location);
 				// DH2015: to test: (should provide tablet server of final tablet that
 				// goes from the last split to +inf
 //				if (i == splitsSize-1)

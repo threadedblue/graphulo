@@ -1,24 +1,28 @@
 package edu.mit.ll.cloud.connection;
 
-public class ConnectionProperties {
+import java.util.Properties;
 
-	private String host;
-	private String user;
-	private String pass;
-	private String instanceName;
-	private String [] authorizations=null;
-	public static final int MAX_NUM_THREADS=25;
-    private int maxNumThreads=MAX_NUM_THREADS;  //50
-    private int sessionTimeOut=100000; //millisec
+public class ConnectionProperties extends Properties {
 
-    public ConnectionProperties() {}
-    
-	public ConnectionProperties(String host, String user, String pass,
-			String instanceName, String[] authorizations) {
-		this.host = host;
-		this.user = user;
-		this.pass = pass;
-		this.instanceName = instanceName;
+	private static final long serialVersionUID = -4776516646245732900L;
+
+	public enum CONN_PROPS {
+		HOST, USER, PASSWORD, INSTANCE
+	};
+
+	private String[] authorizations = null;
+	public static final int MAX_NUM_THREADS = 25;
+	private int maxNumThreads = MAX_NUM_THREADS; // 50
+	private int sessionTimeOut = 100000; // millisec
+
+	public ConnectionProperties() {
+	}
+
+	public ConnectionProperties(String host, String user, String pass, String instanceName, String[] authorizations) {
+		this.setProperty(CONN_PROPS.HOST.name(), host);
+		this.setProperty(CONN_PROPS.INSTANCE.name(), instanceName);
+		this.setProperty(CONN_PROPS.PASSWORD.name(), pass);
+		this.setProperty(CONN_PROPS.USER.name(), user);
 		this.authorizations = authorizations;
 	}
 
@@ -34,86 +38,83 @@ public class ConnectionProperties {
 	 * @return the host
 	 */
 	public String getHost() {
-		return host;
+		return this.getProperty(CONN_PROPS.HOST.name());
 	}
 
 	/**
-	 * @param host
-	 *            the host to set
+	 * @param host the host to set
 	 */
 	public void setHost(String host) {
-		this.host = host;
+		this.setProperty(CONN_PROPS.HOST.name(), host);
 	}
 
 	/**
 	 * @return the user
 	 */
 	public String getUser() {
-		return user;
+		return this.getProperty(CONN_PROPS.USER.name());
 	}
 
 	/**
-	 * @param user
-	 *            the user to set
+	 * @param user the user to set
 	 */
 	public void setUser(String user) {
-		this.user = user;
+		this.setProperty(CONN_PROPS.USER.name(), user);
 	}
 
 	/**
 	 * @return the pass
 	 */
 	public String getPass() {
-		return pass;
+		return this.getProperty(CONN_PROPS.PASSWORD.name());
 	}
 
 	/**
-	 * @param pass
-	 *            the pass to set
+	 * @param pass the pass to set
 	 */
 	public void setPass(String pass) {
-		this.pass = pass;
+		this.setProperty(CONN_PROPS.PASSWORD.name(), pass);
 	}
 
 	/**
 	 * @return the instanceName
 	 */
 	public String getInstanceName() {
-		return instanceName;
+		return this.getProperty(CONN_PROPS.INSTANCE.name());
 	}
 
 	/**
-	 * @param instanceName
-	 *            the instanceName to set
+	 * @param instanceName the instanceName to set
 	 */
 	public void setInstanceName(String instanceName) {
-		this.instanceName = instanceName;
+		this.setProperty(CONN_PROPS.INSTANCE.name(), instanceName);
 	}
 
-    public void setMaxNumThreads( int num) {
-	this.maxNumThreads=num;
-    }
-   public int getMaxNumThreads( ) {
-	return this.maxNumThreads;
-    }
-   public String toString() {
-	   String s = "INSTANCE_NAME="+this.instanceName+", HOST="+this.host+", USER="+this.user;
-	   return s;
-   }
+	public void setMaxNumThreads(int num) {
+		this.maxNumThreads = num;
+	}
 
-public int getSessionTimeOut() {
-	return sessionTimeOut;
-}
+	public int getMaxNumThreads() {
+		return this.maxNumThreads;
+	}
 
-public void setSessionTimeOut(int sessionTimeOut) {
-	this.sessionTimeOut = sessionTimeOut;
+//	public String toString() {
+//		String s = "INSTANCE_NAME=" + this.instanceName + ", HOST=" + this.host + ", USER=" + this.user;
+//		return s;
+//	}
+
+	public int getSessionTimeOut() {
+		return sessionTimeOut;
+	}
+
+	public void setSessionTimeOut(int sessionTimeOut) {
+		this.sessionTimeOut = sessionTimeOut;
+	}
 }
- }
 /*
- * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
- * % D4M: Dynamic Distributed Dimensional Data Model 
- * % MIT Lincoln Laboratory
- * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
- * % (c) <2010> Massachusetts Institute of Technology
+ * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% % D4M: Dynamic
+ * Distributed Dimensional Data Model % MIT Lincoln Laboratory
+ * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% % (c) <2010>
+ * Massachusetts Institute of Technology
  * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  */

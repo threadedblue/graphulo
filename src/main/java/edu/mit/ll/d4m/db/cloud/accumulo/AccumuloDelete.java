@@ -15,11 +15,12 @@ import edu.mit.ll.d4m.db.cloud.util.D4mQueryUtil;
  */
 public class AccumuloDelete {
 
-	private AccumuloConnection connection;
+	private AccumuloClient connection;
 	
 	public AccumuloDelete(String instanceName, String host, String user, String pass) throws AccumuloSecurityException,AccumuloException {
 		ConnectionProperties connectProps = new ConnectionProperties(host, user, pass, instanceName, null);
-		connection = new AccumuloConnection(connectProps);
+		connection = Accumulo.newClient()
+                .from(connectProps).build();
 	}
 	
 	public void deleteRows(String tableName, String rowString, String colString, String colFamilyString, String visibilityString) throws TableNotFoundException, MutationsRejectedException

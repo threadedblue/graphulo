@@ -1,7 +1,17 @@
 package edu.mit.ll.d4m.db.cloud.accumulo;
 
-import edu.mit.ll.d4m.db.cloud.D4mDbInsert;
-import org.apache.accumulo.core.client.*;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Comparator;
+
+import org.apache.accumulo.core.client.Accumulo;
+import org.apache.accumulo.core.client.AccumuloClient;
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.BatchWriter;
+import org.apache.accumulo.core.client.MutationsRejectedException;
+import org.apache.accumulo.core.client.TableExistsException;
+import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.client.lexicoder.Lexicoder;
 import org.apache.accumulo.core.client.lexicoder.UIntegerLexicoder;
 import org.apache.accumulo.core.data.Mutation;
@@ -10,12 +20,9 @@ import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Text;
 import org.apache.log4j.Logger;
 
+import edu.mit.ll.d4m.db.cloud.D4mDbInsert;
 import edu.mit.ll.d4m.db.cloud.D4mInsertBase;
 import edu.mit.ll.d4m.db.cloud.util.D4mQueryUtil;
-
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.Comparator;
 
 /**
  * @author CHV8091
@@ -24,7 +31,7 @@ import java.util.Comparator;
 public class AccumuloInsert extends D4mInsertBase {
 	private static final Logger log = Logger.getLogger(AccumuloInsert.class);
 
-	AccumuloConnection connection=null;
+	AccumuloClient connection = null;
 	public AccumuloInsert() {
 		super();
 	}
@@ -39,9 +46,10 @@ public class AccumuloInsert extends D4mInsertBase {
 	 * @see edu.mit.ll.d4m.db.cloud.D4mInsertBase#doProcessing()
 	 */
 	@Override
-	public void doProcessing() throws AccumuloException,AccumuloSecurityException,TableNotFoundException{
+	public void doProcessing() throws AccumuloException,AccumuloSecurityException,TableNotFoundException, TableExistsException{
 		if(connection == null)
-			connection = new AccumuloConnection(super.connProps);
+		connection = Accumulo.newClient()
+                .from(super.connProps).build();
 
 		//Create table
 		createTable();
@@ -201,11 +209,12 @@ public class AccumuloInsert extends D4mInsertBase {
 			(byte)0x1f, (byte)0x9f, (byte)0x5f, (byte)0xdf, (byte)0x3f, (byte)0xbf, (byte)0x7f, (byte)0xff
 	};
 
-	private void createTable () throws AccumuloException,AccumuloSecurityException{
+	private void createTable () throws AccumuloException,AccumuloSecurityException, TableExistsException{
 		if(connection == null)
-			connection = new AccumuloConnection(super.connProps);
-		if(!connection.tableExist(super.tableName)) {
-			connection.createTable(super.tableName);
+			connection =  Accumulo.newClient()
+                    .from(connProps).build();
+		if(!connection.tableOperations().exists(super.tableName)) {
+			connection.tableOperations().create(super.tableName);
 		}
 	}
 }

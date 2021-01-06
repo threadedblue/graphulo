@@ -1,10 +1,12 @@
 package edu.mit.ll.d4m.db.cloud;
 
-import edu.mit.ll.cloud.connection.ConnectionProperties;
-import edu.mit.ll.d4m.db.cloud.accumulo.AccumuloConnection;
-
 import java.util.Iterator;
 import java.util.SortedSet;
+
+import org.apache.accumulo.core.client.Accumulo;
+import org.apache.accumulo.core.client.AccumuloClient;
+
+import edu.mit.ll.cloud.connection.ConnectionProperties;
 
 /**
  * @author wi20909
@@ -35,9 +37,10 @@ public class D4mDbInfo extends D4mParent {
 	}
 
 	public String getTableList() throws Exception {
-		AccumuloConnection connection = new AccumuloConnection(this.connProps);
+		AccumuloClient connection = Accumulo.newClient()
+                .from(connProps).build();
 
-		SortedSet<String> set = connection.getTableList();
+		SortedSet<String> set = connection.tableOperations().list();
 		Iterator<String> it = set.iterator();
 		StringBuilder sb = new StringBuilder();
 		while (it.hasNext()) {
