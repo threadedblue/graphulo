@@ -1,3 +1,5 @@
+### This is a fork of the accla/graphulo project.  It is intended for use in an environment where its provides only connectivity to an Accumulo 2.0 database.  All else is removed.
+
 Graphulo
 ========
 
