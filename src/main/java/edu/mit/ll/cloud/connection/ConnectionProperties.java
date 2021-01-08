@@ -2,13 +2,11 @@ package edu.mit.ll.cloud.connection;
 
 import java.util.Properties;
 
+import org.apache.accumulo.core.conf.ClientProperty;
+
 public class ConnectionProperties extends Properties {
 
 	private static final long serialVersionUID = -4776516646245732900L;
-
-	public enum CONN_PROPS {
-		HOST, USER, PASSWORD, INSTANCE
-	};
 
 	private String[] authorizations = null;
 	public static final int MAX_NUM_THREADS = 25;
@@ -19,10 +17,11 @@ public class ConnectionProperties extends Properties {
 	}
 
 	public ConnectionProperties(String host, String user, String pass, String instanceName, String[] authorizations) {
-		this.setProperty(CONN_PROPS.HOST.name(), host);
-		this.setProperty(CONN_PROPS.INSTANCE.name(), instanceName);
-		this.setProperty(CONN_PROPS.PASSWORD.name(), pass);
-		this.setProperty(CONN_PROPS.USER.name(), user);
+		this.setProperty(ClientProperty.INSTANCE_ZOOKEEPERS.getKey(), host);
+		this.setProperty(ClientProperty.INSTANCE_NAME.getKey(), instanceName);
+		this.setProperty(ClientProperty.AUTH_TOKEN.getKey(), pass);
+		this.setProperty(ClientProperty.AUTH_PRINCIPAL.getKey(), user);
+		this.setProperty(ClientProperty.AUTH_TYPE.getKey(), "password");
 		this.authorizations = authorizations;
 	}
 
@@ -38,58 +37,66 @@ public class ConnectionProperties extends Properties {
 	 * @return the host
 	 */
 	public String getHost() {
-		return this.getProperty(CONN_PROPS.HOST.name());
+		return this.getProperty(ClientProperty.INSTANCE_ZOOKEEPERS.getKey());
 	}
 
 	/**
 	 * @param host the host to set
 	 */
 	public void setHost(String host) {
-		this.setProperty(CONN_PROPS.HOST.name(), host);
+		this.setProperty(ClientProperty.INSTANCE_ZOOKEEPERS.getKey(), host);
 	}
 
 	/**
 	 * @return the user
 	 */
 	public String getUser() {
-		return this.getProperty(CONN_PROPS.USER.name());
+		return this.getProperty(ClientProperty.AUTH_PRINCIPAL.getKey());
 	}
 
 	/**
 	 * @param user the user to set
 	 */
 	public void setUser(String user) {
-		this.setProperty(CONN_PROPS.USER.name(), user);
+		this.setProperty(ClientProperty.AUTH_PRINCIPAL.getKey(), user);
 	}
 
 	/**
 	 * @return the pass
 	 */
 	public String getPass() {
-		return this.getProperty(CONN_PROPS.PASSWORD.name());
+		return this.getProperty(ClientProperty.AUTH_TOKEN.getKey());
 	}
 
 	/**
 	 * @param pass the pass to set
 	 */
 	public void setPass(String pass) {
-		this.setProperty(CONN_PROPS.PASSWORD.name(), pass);
+		this.setProperty(ClientProperty.AUTH_TOKEN.getKey(), pass);
 	}
 
 	/**
 	 * @return the instanceName
 	 */
 	public String getInstanceName() {
-		return this.getProperty(CONN_PROPS.INSTANCE.name());
+		return this.getProperty(ClientProperty.INSTANCE_NAME.getKey());
 	}
 
 	/**
 	 * @param instanceName the instanceName to set
 	 */
 	public void setInstanceName(String instanceName) {
-		this.setProperty(CONN_PROPS.INSTANCE.name(), instanceName);
+		this.setProperty(ClientProperty.INSTANCE_NAME.getKey(), instanceName);
 	}
 
+	public String getType() {
+		return this.getProperty(ClientProperty.AUTH_TYPE.getKey());
+	}
+	
+	public void setType(String type) {
+		this.setProperty(ClientProperty.AUTH_TYPE.getKey(), type);
+	}
+	
 	public void setMaxNumThreads(int num) {
 		this.maxNumThreads = num;
 	}

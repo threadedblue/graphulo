@@ -34,6 +34,7 @@ public class D4mDbInfo extends D4mParent {
 		this.connProps.setHost(host);
 		this.connProps.setUser(username);
 		this.connProps.setPass(password);
+		this.connProps.setType("password");
 	}
 
 	public String getTableList() throws Exception {
