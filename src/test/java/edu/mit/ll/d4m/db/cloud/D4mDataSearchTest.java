@@ -20,8 +20,10 @@ class D4mDataSearchTest {
 		try {
 			D4mDbResultSet rs = sut.doMatlabQuery(":", "Encounters,:,Encounters,", "", "");
 			assertNotNull(rs);
+			assertTrue(rs.getMatlabDbRow().size() > 0);
 			D4mDbResultSet rs1 = sut.doMatlabQuery(":", "Allergies_and_Adverse_Reactions.Observation.code:ASSERTION,", "", "");
 			assertNotNull(rs1);
+			assertTrue(rs1.getMatlabDbRow().size() > 0);
 		} catch (D4mException e) {
 			e.printStackTrace();
 		}
