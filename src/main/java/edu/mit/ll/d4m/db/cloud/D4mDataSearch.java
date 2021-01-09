@@ -34,7 +34,7 @@ public class D4mDataSearch extends D4mParentQuery {
 		super.connProps.setInstanceName(instanceName);
 		super.connProps.setUser(username);
 		super.connProps.setPass(password);
-
+		super.connProps.setType("password");
 	}
 
 	/* (non-Javadoc)
